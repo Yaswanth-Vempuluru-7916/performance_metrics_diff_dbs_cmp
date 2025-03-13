@@ -1,43 +1,49 @@
-mod models;
 mod config;
 mod db;
+mod models;
+
 use config::Config;
-use db::rocksdb::RocksDBClient;
-use models::rune_pool::{Interval, Meta, RunePoolResponse};
+use db::leveldb::LevelDBClient;
+use models::rune_pool::RunePoolResponse;
 
-fn main()-> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = Config::load();
+    let client = LevelDBClient::new(&config)?;
 
-    let client = RocksDBClient::new(&config)?;
-
-    let response = RunePoolResponse {
-        meta: Meta {
-            start_time: 1728802800,
-            end_time: 1728813600,
-            start_count: 1,
-            end_count: 362,
-            start_units: 364510161922082,
-            end_units: 364460711492685,
+    // Simulate raw API JSON with strings
+    let json = r#"
+    {
+        "meta": {
+            "startTime": "1728802800",
+            "endTime": "1728813600",
+            "startCount": "1",
+            "endCount": "362",
+            "startUnits": "364510161922082",
+            "endUnits": "364460711492685"
         },
-        intervals: vec![
-            Interval {
-                start_time: 1728802800,
-                end_time: 1728806400,
-                count: 1,
-                units: 364510161922082,
+        "intervals": [
+            {
+                "startTime": "1728802800",
+                "endTime": "1728806400",
+                "count": "1",
+                "units": "364510161922082"
             },
-            Interval {
-                start_time: 1728806400,
-                end_time: 1728810000,
-                count: 362,
-                units: 364460711492685,
-            },
-        ],
-    };
+            {
+                "startTime": "1728806400",
+                "endTime": "1728810000",
+                "count": "362",
+                "units": "364460711492685"
+            }
+        ]
+    }"#;
 
+    // Deserialize JSON into RunePoolResponse (strings -> u64)
+    let response: RunePoolResponse = serde_json::from_str(json)?;
+    println!("Deserialized: {:?}\n", response);
+
+    // Update and retrieve
     client.update_rune_pool(&response)?;
     let retrieved = client.get_rune_pool()?;
     println!("Retrieved: {:?}", retrieved);
     Ok(())
-    
 }
