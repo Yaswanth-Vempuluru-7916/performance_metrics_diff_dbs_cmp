@@ -1,8 +1,8 @@
 use crate::config::Config;
-use crate::models::rune_pool::{Meta, Interval, RunePoolResponse};
+use crate::models::rune_pool::{Interval, Meta, RunePoolResponse};
 use leveldb::database::Database;
-use leveldb::options::{Options, WriteOptions, ReadOptions};
 use leveldb::kv::KV;
+use leveldb::options::{Options, ReadOptions, WriteOptions};
 use serde_json;
 use std::error::Error;
 use std::path::Path;
