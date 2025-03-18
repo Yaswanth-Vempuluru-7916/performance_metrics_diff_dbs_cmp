@@ -1,113 +1,68 @@
 use crate::config::Config;
-use crate::models::rune_pool::{Interval, Meta, RunePoolResponse};
-use serde_json;
-use surrealdb::engine::remote::ws::Ws;
+use crate::models::rune_pool::{DbInterval, DbMeta, DbRunePoolResponse};
+use surrealdb::engine::remote::ws::{Ws, Client};
 use surrealdb::opt::auth::Root;
 use surrealdb::Surreal;
 use std::error::Error;
-use std::sync::Arc;
 
 pub struct SurrealDBClient {
-    db: Arc<Surreal<surrealdb::engine::remote::ws::Client>>,
+    db: Surreal<Client>,
 }
 
 impl SurrealDBClient {
-    /// Initializes a new SurrealDB instance with the given config.
     pub async fn new(config: &Config) -> Result<Self, Box<dyn Error>> {
-        // Connect to the database
-        let db = Surreal::new::<Ws>(config.surrealdb_url.clone()).await?;
-        
-        // Sign in as root (or use namespace/database)
-        db.use_ns("runepool").use_db("runepool").await?;
-        
-        // Create tables if they don't exist
-        let _ = db.query("DEFINE TABLE meta SCHEMAFULL").await?;
-        let _ = db.query("DEFINE TABLE intervals SCHEMAFULL").await?;
-        
-        Ok(SurrealDBClient { 
-            db: Arc::new(db)
+        let db = Surreal::new::<Ws>(&config.surrealdb_url).await?;
+        db.signin(Root {
+            username: "root",
+            password: "root",
         })
+        .await?;
+        db.use_ns("runepool_ns").use_db("runepool_db").await?;
+        Ok(SurrealDBClient { db })
     }
 
-    /// Updates the database with a RunePoolResponse.
-    pub async fn update_rune_pool(&self, response: &RunePoolResponse) -> Result<(), Box<dyn Error>> {
-        // First, clear existing data
-        let _ = self.db.query("DELETE FROM meta").await?;
-        let _ = self.db.query("DELETE FROM intervals").await?;
-        
-        // Insert meta data with specific ID - Clone to own the data
-        let meta_id = "meta:main";
-        let meta_clone = response.meta.clone();
-        let _: Option<Meta> = self.db
-            .create(("meta", "main"))
-            .content(meta_clone)
-            .await?;
-        
-        // Insert interval data
-        for (index, interval) in response.intervals.iter().enumerate() {
-            // Create interval data as owned values
-            let interval_data = serde_json::json!({
-                "index": index,
-                "meta_id": meta_id,
-                "start_time": interval.start_time,
-                "end_time": interval.end_time,
-                "count": interval.count,
-                "units": interval.units
-            });
-            
-            let _: Option<serde_json::Value> = self.db
-                .create("intervals")
-                .content(interval_data)
-                .await?;
+    pub async fn update_rune_pool(&self, response: &DbRunePoolResponse) -> Result<(), Box<dyn Error>> {
+        self.db
+            .query("CREATE meta SET start_time = $start_time, end_time = $end_time, start_count = $start_count, end_count = $end_count, start_units = $start_units, end_units = $end_units")
+            .bind(("start_time", response.meta.start_time))
+            .bind(("end_time", response.meta.end_time))
+            .bind(("start_count", response.meta.start_count))
+            .bind(("end_count", response.meta.end_count))
+            .bind(("start_units", response.meta.start_units))
+            .bind(("end_units", response.meta.end_units))
+            .await?
+            .check()?;
+
+        for interval in &response.intervals {
+            let query = format!(
+                "CREATE interval:{} SET start_time = $start_time, end_time = $end_time, count = $count, units = $units",
+                interval.start_time
+            );
+            self.db
+                .query(&query)
+                .bind(("start_time", interval.start_time))
+                .bind(("end_time", interval.end_time))
+                .bind(("count", interval.count))
+                .bind(("units", interval.units))
+                .await?
+                .check()?;
         }
-        
+
         Ok(())
     }
 
-    /// Retrieves the stored RunePoolResponse from the database.
-    pub async fn get_rune_pool(&self) -> Result<RunePoolResponse, Box<dyn Error>> {
-        // Get meta data
-        let mut result = self.db
-            .query("SELECT * FROM meta LIMIT 1")
-            .await?;
-            
-        let meta_vec: Vec<Meta> = result.take(0)?;
-        let meta = meta_vec.get(0).ok_or("Meta not found")?.clone();
-        
-        // Get intervals ordered by their index
-        let mut result = self.db
-            .query("SELECT start_time, end_time, count, units FROM intervals ORDER BY index")
-            .await?;
-            
-        let intervals: Vec<Interval> = result.take(0)?;
-        
-        Ok(RunePoolResponse { meta, intervals })
-    }
-    
-    /// Benchmark-optimized method to retrieve only meta
-    pub async fn get_meta(&self) -> Result<Meta, Box<dyn Error>> {
-        let mut result = self.db
-            .query("SELECT * FROM meta LIMIT 1")
-            .await?;
-            
-        let meta_vec: Vec<Meta> = result.take(0)?;
-        meta_vec.get(0).cloned().ok_or_else(|| "Meta not found".into())
-    }
-    
-    /// Benchmark-optimized method to retrieve intervals count
-    pub async fn get_intervals_count(&self) -> Result<usize, Box<dyn Error>> {
-        let mut result = self.db
-            .query("SELECT count() as count FROM intervals")
-            .await?;
-            
-        #[derive(serde::Deserialize)]
-        struct CountResult {
-            count: i64,
-        }
-        
-        let counts: Vec<CountResult> = result.take(0)?;
-        let count = counts.get(0).map(|c| c.count).unwrap_or(0);
-        
-        Ok(count as usize)
+    pub async fn get_rune_pool(&self) -> Result<DbRunePoolResponse, Box<dyn Error>> {
+        let metas: Vec<DbMeta> = self.db
+            .query("SELECT start_time, end_time, start_count, end_count, start_units, end_units FROM meta")
+            .await?
+            .take(0)?;
+        let meta = metas.into_iter().next().ok_or("Meta not found")?;
+
+        let intervals: Vec<DbInterval> = self.db
+            .query("SELECT start_time, end_time, count, units FROM interval ORDER BY start_time ASC")
+            .await?
+            .take(0)?;
+
+        Ok(DbRunePoolResponse { meta, intervals })
     }
 }

@@ -30,7 +30,7 @@ impl Config {
         let leveldb_path =
             env::var("LEVELDB_PATH").unwrap_or_else(|_| "./data/leveldb".to_string());
         let surrealdb_url =
-            env::var("SURREALDB_URL").unwrap_or_else(|_| "ws://localhost:8000".to_string());
+            env::var("SURREALDB_URL").unwrap_or_else(|_| "127.0.0.1:8000".to_string());
         let psql_conn = env::var("PSQL_CONN")
             .unwrap_or_else(|_| "postgres://user:password@localhost:5432/runepool".to_string());
         let mongodb_uri = env::var("MONGODB_URI")
