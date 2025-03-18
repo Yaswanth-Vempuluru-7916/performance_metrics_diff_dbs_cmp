@@ -4,11 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+axum = "0.8.1"
 chrono = "0.4.40"
 dotenvy = "0.15.7"
 futures-util = "0.3.31"
 leveldb = "0.8.6"
 mongodb = "3.2.2"
+reqwest = { version = "0.12.14", features = ["json"] }
 rocksdb = {version = "0.23.0", default-features = false}
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
