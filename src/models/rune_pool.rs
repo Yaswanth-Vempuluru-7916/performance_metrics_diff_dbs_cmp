@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
-
+use sqlx::FromRow;
 // API-facing model (matches JSON)
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -47,7 +47,7 @@ pub struct ApiRunePoolResponse {
 }
 
 // DB-facing model (matches SurrealDB schema)
-#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize, FromRow)]
 pub struct DbMeta {
     pub start_time: u64,
     pub end_time: u64,
@@ -57,7 +57,7 @@ pub struct DbMeta {
     pub end_units: u64,
 }
 
-#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize, FromRow)]
 pub struct DbInterval {
     pub start_time: u64,
     pub end_time: u64,

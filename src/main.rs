@@ -3,9 +3,9 @@ mod db;
 mod models;
 
 use config::Config;
-use db::{leveldb::LevelDBClient, rocksdb::RocksDBClient, surrealdb::SurrealDBClient};
+use db::{leveldb::LevelDBClient, mongodb::MongoDBClient, rocksdb::RocksDBClient, surrealdb::SurrealDBClient};
 use crate::models::rune_pool::{DbRunePoolResponse, ApiRunePoolResponse};
-
+use db::psql::PsqlClient;
 use serde_json;
 
 
@@ -15,6 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("LevelDB Path: {}", config.leveldb_path);
     println!("RocksDB Path: {}", config.rocksdb_path);
     println!("SurrealDB URL: {}", config.surrealdb_url);
+    println!("PostgreSQL URL: {}", config.psql_conn);
 
     let json = r#"
     {
@@ -47,26 +48,40 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let db_response: DbRunePoolResponse = api_response.clone().into();
 
-    // Test LevelDB
-    let leveldb_client = LevelDBClient::new(&config)?;
-    leveldb_client.update_rune_pool(&db_response)?;
-    let retrieved_db: DbRunePoolResponse = leveldb_client.get_rune_pool()?;
-    let retrieved_api: ApiRunePoolResponse = retrieved_db.into();
-    println!("Retrieved (LevelDB): {:?}", retrieved_api);
+    // // Test LevelDB
+    // let leveldb_client = LevelDBClient::new(&config)?;
+    // leveldb_client.update_rune_pool(&db_response)?;
+    // let retrieved_db: DbRunePoolResponse = leveldb_client.get_rune_pool()?;
+    // let retrieved_api: ApiRunePoolResponse = retrieved_db.into();
+    // println!("Retrieved (LevelDB): {:?}", retrieved_api);
 
-    // Test RocksDB
-    let rocksdb_client = RocksDBClient::new(&config)?;
-    rocksdb_client.update_rune_pool(&db_response)?;
-    let retrieved_db: DbRunePoolResponse = rocksdb_client.get_rune_pool()?;
-    let retrieved_api: ApiRunePoolResponse = retrieved_db.into();
-    println!("Retrieved (RocksDB): {:?}", retrieved_api);
+    // // Test RocksDB
+    // let rocksdb_client = RocksDBClient::new(&config)?;
+    // rocksdb_client.update_rune_pool(&db_response)?;
+    // let retrieved_db: DbRunePoolResponse = rocksdb_client.get_rune_pool()?;
+    // let retrieved_api: ApiRunePoolResponse = retrieved_db.into();
+    // println!("Retrieved (RocksDB): {:?}", retrieved_api);
 
-    let client = SurrealDBClient::new(&config).await?;
-    let db_response: DbRunePoolResponse = api_response.clone().into();
-    client.update_rune_pool(&db_response).await?;
-    let retrieved_db: DbRunePoolResponse = client.get_rune_pool().await?;
+    // let client = SurrealDBClient::new(&config).await?;
+    // let db_response: DbRunePoolResponse = api_response.clone().into();
+    // client.update_rune_pool(&db_response).await?;
+    // let retrieved_db: DbRunePoolResponse = client.get_rune_pool().await?;
+    // let retrieved_api: ApiRunePoolResponse = retrieved_db.into();
+    // println!("Retrieved: {:?}", retrieved_api);
+
+    // // Test PostgreSQL
+    // let psql_client = PsqlClient::new(&config).await?;
+    // psql_client.update_rune_pool(&db_response).await?;
+    // let retrieved_db: DbRunePoolResponse = psql_client.get_rune_pool().await?;
+    // let retrieved_api: ApiRunePoolResponse = retrieved_db.into();
+    // println!("Retrieved (PostgreSQL): {:?}", retrieved_api);
+
+    //Test MongoDB
+    let mongodb_client = MongoDBClient::new(&config).await?;
+    mongodb_client.update_rune_pool(&db_response).await?;
+    let retrieved_db: DbRunePoolResponse = mongodb_client.get_rune_pool().await?;
     let retrieved_api: ApiRunePoolResponse = retrieved_db.into();
-    println!("Retrieved: {:?}", retrieved_api);
+    println!("Retrieved (MongoDB): {:?}", retrieved_api);
 
     Ok(())
 }
