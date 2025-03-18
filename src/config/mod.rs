@@ -1,6 +1,7 @@
 use chrono::{Duration, Utc};
 use std::env;
 
+#[derive(Clone)]
 pub struct Config {
     pub api_url: String,
     pub interval: String,
@@ -10,7 +11,9 @@ pub struct Config {
     pub surrealdb_url: String,
     pub psql_conn: String,
     pub mongodb_uri: String,
-    pub db_name : String,
+    pub db_name: String,
+    pub host: String,
+    pub port: u16,
 }
 
 impl Config {
@@ -39,6 +42,10 @@ impl Config {
         let db_name = env::var("DB_NAME")
             .unwrap_or_else(|_| "runepool".to_string());
 
+        // Server settings
+        let host = env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
+        let port = env::var("PORT").unwrap_or_else(|_| "3000".to_string()).parse::<u16>().expect("Invalid PORT value");
+
         Config {
             api_url,
             interval,
@@ -49,6 +56,8 @@ impl Config {
             psql_conn,
             mongodb_uri,
             db_name,
+            host,
+            port,
         }
     }
 }
