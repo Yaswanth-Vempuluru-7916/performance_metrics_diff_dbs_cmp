@@ -4,7 +4,6 @@ This project compares the performance of five databases—`LevelDB`, `RocksDB`, 
 
 ## Features
 - **Endpoints**: RESTful API for updating (`/update`), fetching and updating (`/fetch-and-update`), retrieving (`/get`), and clearing (`/clear`) data.
-- **Databases**: Embedded (`LevelDB`, `RocksDB`) and networked (`SurrealDB`, `PostgreSQL`, `MongoDB`).
 - **Performance Metrics**: Timings (in milliseconds) are returned in API responses for each database operation.
 
 
@@ -12,7 +11,6 @@ This project compares the performance of five databases—`LevelDB`, `RocksDB`, 
 
 ### Prerequisites
 - **Rust**: Install via `rustup` (`rustup install stable`).
-- **Docker**: For running `PostgreSQL` and `MongoDB`.
 - **SurrealDB**: Install the CLI (`cargo install surrealdb` or download from [SurrealDB](https://surrealdb.com)).
 
 ### Dependencies
@@ -99,7 +97,7 @@ Below are the measured timings (in milliseconds) for key operations across the d
 
 | Operation         | LevelDB | RocksDB | SurrealDB | PostgreSQL | MongoDB |
 |-------------------|---------|---------|-----------|------------|---------|
-| Small Write (ms)  |   0      |    0     |   163        |   9         |    318     |
+| Small Write (10 intervals)(ms)  |   0      |    0     |   163        |   9         |    318     |
 | Bulk Write (ms)   | 9       | 25      | 6168      | 562        | 2128    |
 | Read (ms)         |   1      |     2    |     66      |     16       |   2546      |
 | Clear (ms)        |  3       |     16    |      46     |    136        |     467    |
