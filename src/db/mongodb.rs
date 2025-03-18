@@ -51,4 +51,10 @@ impl MongoDBClient{
 
         Ok(DbRunePoolResponse { meta, intervals })
     }
+
+    pub async fn clear(&self) -> Result<(), Box<dyn Error>> {
+        self.meta_coll.delete_many(doc! {}).await?;
+        self.intervals_coll.delete_many(doc! {}).await?;
+        Ok(())
+    }
 }

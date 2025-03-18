@@ -67,4 +67,28 @@ impl LevelDBClient {
 
         Ok(DbRunePoolResponse { meta, intervals })
     }
+
+    /// Clears all data from the database.
+pub fn clear(&self) -> Result<(), Box<dyn Error>> {
+    let write_opts = WriteOptions::new();
+
+    // Delete meta (key 0)
+    self.db.delete(write_opts, 0)?;
+
+    // Delete all intervals (keys 1, 2, 3, ...)
+    let mut index = 1;
+    loop {
+        let read_opts = ReadOptions::new(); // Create a new ReadOptions instance in each iteration
+        let key = index as i32;
+        if self.db.get(read_opts, key)?.is_some() {
+            self.db.delete(write_opts, key)?;
+            index += 1;
+        } else {
+            break;
+        }
+    }
+
+    Ok(())
+}
+
 }

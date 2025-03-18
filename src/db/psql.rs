@@ -112,4 +112,10 @@ impl PsqlClient {
 
         Ok(DbRunePoolResponse { meta, intervals })
     }
+
+    pub async fn clear(&self) -> Result<(), Box<dyn Error>> {
+        sqlx::query("DELETE FROM meta").execute(&self.pool).await?;
+        sqlx::query("DELETE FROM intervals").execute(&self.pool).await?;
+        Ok(())
+    }
 }

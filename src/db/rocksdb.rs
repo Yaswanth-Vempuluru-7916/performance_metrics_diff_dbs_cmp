@@ -49,4 +49,19 @@ impl RocksDBClient {
         }
         Ok(DbRunePoolResponse { meta, intervals })
     }
+
+    pub fn clear(&self) -> Result<(), Box<dyn Error>> {
+        self.db.delete("meta".as_bytes())?;
+        let mut index = 0;
+        loop {
+            let key = format!("interval_{}", index).into_bytes();
+            if self.db.get(&key)?.is_some() {
+                self.db.delete(&key)?;
+                index += 1;
+            } else {
+                break;
+            }
+        }
+        Ok(())
+    }
 }

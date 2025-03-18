@@ -65,4 +65,10 @@ impl SurrealDBClient {
 
         Ok(DbRunePoolResponse { meta, intervals })
     }
+
+    pub async fn clear(&self) -> Result<(), Box<dyn Error>> {
+        self.db.query("DELETE meta").await?.check()?;
+        self.db.query("DELETE interval").await?.check()?;
+        Ok(())
+    }
 }
