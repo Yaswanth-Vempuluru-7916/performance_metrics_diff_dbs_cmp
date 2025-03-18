@@ -9,7 +9,7 @@ dotenvy = "0.15.7"
 futures-util = "0.3.31"
 leveldb = "0.8.6"
 mongodb = "3.2.2"
-rocksdb = "0.23.0"
+rocksdb = {version = "0.23.0", default-features = false}
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 serde_with = "3.12.0"
