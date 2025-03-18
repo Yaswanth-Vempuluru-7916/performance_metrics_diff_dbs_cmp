@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::models::rune_pool::{Interval, Meta, RunePoolResponse};
+use crate::models::rune_pool::{DbInterval, DbMeta, DbRunePoolResponse};
 use leveldb::database::Database;
 use leveldb::kv::KV;
 use leveldb::options::{Options, ReadOptions, WriteOptions};
@@ -20,8 +20,8 @@ impl LevelDBClient {
         Ok(LevelDBClient { db })
     }
 
-    /// Updates the database with a RunePoolResponse.
-    pub fn update_rune_pool(&self, response: &RunePoolResponse) -> Result<(), Box<dyn Error>> {
+    /// Updates the database with a DbRunePoolResponse.
+    pub fn update_rune_pool(&self, response: &DbRunePoolResponse) -> Result<(), Box<dyn Error>> {
         let write_opts = WriteOptions::new();
 
         // Serialize and store meta
@@ -40,14 +40,14 @@ impl LevelDBClient {
         Ok(())
     }
 
-    /// Retrieves the stored RunePoolResponse from the database.
-    pub fn get_rune_pool(&self) -> Result<RunePoolResponse, Box<dyn Error>> {
+    /// Retrieves the stored DbRunePoolResponse from the database.
+    pub fn get_rune_pool(&self) -> Result<DbRunePoolResponse, Box<dyn Error>> {
         let read_opts = ReadOptions::new();
 
         // Retrieve meta
         let meta_key = 0;
         let meta_value = self.db.get(read_opts, meta_key)?.ok_or("Meta not found")?;
-        let meta: Meta = serde_json::from_slice(&meta_value)?;
+        let meta: DbMeta = serde_json::from_slice(&meta_value)?;
 
         // Retrieve intervals
         let mut intervals = Vec::new();
@@ -57,7 +57,7 @@ impl LevelDBClient {
             let key = index as i32;
             match self.db.get(read_opts, key)? {
                 Some(value) => {
-                    let interval: Interval = serde_json::from_slice(&value)?;
+                    let interval: DbInterval = serde_json::from_slice(&value)?;
                     intervals.push(interval);
                     index += 1;
                 }
@@ -65,6 +65,6 @@ impl LevelDBClient {
             }
         }
 
-        Ok(RunePoolResponse { meta, intervals })
+        Ok(DbRunePoolResponse { meta, intervals })
     }
 }
