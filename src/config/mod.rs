@@ -10,6 +10,7 @@ pub struct Config {
     pub surrealdb_url: String,
     pub psql_conn: String,
     pub mongodb_uri: String,
+    pub db_name : String,
 }
 
 impl Config {
@@ -35,6 +36,8 @@ impl Config {
             .unwrap_or_else(|_| "postgres://user:password@localhost:5432/runepool".to_string());
         let mongodb_uri = env::var("MONGODB_URI")
             .unwrap_or_else(|_| "mongodb://localhost:27017/runepool".to_string());
+        let db_name = env::var("DB_NAME")
+            .unwrap_or_else(|_| "runepool".to_string());
 
         Config {
             api_url,
@@ -45,6 +48,7 @@ impl Config {
             surrealdb_url,
             psql_conn,
             mongodb_uri,
+            db_name,
         }
     }
 }
