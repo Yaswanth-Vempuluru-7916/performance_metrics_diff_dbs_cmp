@@ -1,5 +1,4 @@
 ### `Performance Metrics Across Different Databases`
-```markdown
 
 This project compares the performance of five databases—`LevelDB`, `RocksDB`, `SurrealDB`, `PostgreSQL`, and `MongoDB`—for storing and retrieving `RunePoolResponse` data. It uses an Axum-based web server to expose endpoints for updating, fetching, retrieving, and clearing data across all databases simultaneously. The goal is to measure write, read, and clear operation times to determine which database is most efficient for this workload.
 
@@ -112,5 +111,3 @@ Below are the measured timings (in milliseconds) for key operations across the d
 - **PostgreSQL**: Moderate (562 ms), balancing relational features with performance.
 - **MongoDB**: Slower than expected (2128 ms).
 
-
-```
